@@ -1,17 +1,26 @@
-
 name: Refresh Lovecherry feeds
 
 on:
   workflow_dispatch:
   schedule:
     - cron: "17 3 * * *"
+  push:
+    branches:
+      - fix/feeds
+    paths-ignore:
+      - "public/feeds/**"
 
 permissions:
   contents: write
 
+concurrency:
+  group: refresh-feeds-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   refresh:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     steps:
       - name: Checkout repository
@@ -25,14 +34,40 @@ jobs:
       - name: Fetch and transform supplier CSVs
         run: python build_feeds.py
 
-      - name: Commit updated feeds
+      - name: Verify both feed files exist
+        run: |
+          for f in public/feeds/products.csv public/feeds/stock.csv; do
+            test -s "$f" || { echo "::error::Missing or empty $f"; exit 1; }
+            echo "$f: $(wc -l < "$f") lines, $(wc -c < "$f") bytes"
+          done
+
+      - name: Upload feeds as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: lovecherry-feeds
+          path: public/feeds/*.csv
+          if-no-files-found: error
+
+      - name: Commit and push updated feeds
+        env:
+          REF_NAME: ${{ github.ref_name }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add public/feeds/
           if git diff --cached --quiet; then
             echo "No feed changes."
-          else
-            git commit -m "Refresh Lovecherry feeds"
-            git push
+            exit 0
           fi
+          git commit -m "Refresh Lovecherry feeds"
+          for attempt in 1 2 3; do
+            # On conflict, keep the freshly generated feed (in a rebase, "theirs" is our commit).
+            git pull --rebase -X theirs origin "$REF_NAME" || { git rebase --abort 2>/dev/null; true; }
+            if git push origin "HEAD:$REF_NAME"; then
+              exit 0
+            fi
+            echo "Push attempt $attempt failed; retrying..."
+            sleep $((attempt * 5))
+          done
+          echo "::error::Could not push feeds after 3 attempts"
+          exit 1
