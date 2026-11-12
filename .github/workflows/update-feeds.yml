@@ -20,7 +20,7 @@ jobs:
           python-version: "3.12"
 
       - name: Fetch and transform supplier CSVs
-        run: python scripts/build_feeds.py
+        run: run: python build_feeds.py
 
       - name: Commit updated feeds
         run: |
