@@ -163,7 +163,9 @@ def build_products(headers, rows, images_header):
     split = [split_images(row.get(images_header, "")) for row in rows]
     # Only the extra image_N columns are capped; the original `imagenes`
     # column keeps the complete, unchanged list of URLs.
-    width = min(max([len(urls) for urls in split] + [1]), MAX_IMAGE_COLUMNS)
+    # The column count is fixed so the Stockeo field mapping never breaks when
+    # the supplier data changes.
+    width = MAX_IMAGE_COLUMNS
     prefix = "image_"
     if any(f"{prefix}{i}" in headers for i in range(1, width + 1)):
         prefix = "imagen_"                           # avoid clobbering supplier columns
@@ -182,6 +184,57 @@ def build_products(headers, rows, images_header):
         print(f"[images] {beyond} URLs beyond image_{MAX_IMAGE_COLUMNS} are only kept in "
               f"the original 'imagenes' column")
     return headers + image_cols, out_rows, total
+
+
+def find_column(headers, name):
+    """Actual header matching name (case/accent/space tolerant) or None."""
+    wanted = normalize(name)
+    for header in headers:
+        if normalize(header) == wanted:
+            return header
+    return None
+
+
+def add_stockeo_columns(headers, rows, images_header):
+    """Add helper columns for Stockeo; no existing column or value is changed.
+
+    gallery_1..gallery_20: the combined, de-duplicated images of ALL rows that
+        share the same idProducto (one row per size/variant in the supplier
+        feed, and the images are often only on some of those rows).
+    variant_option_name / variant_option_value: `combinacion` split at the
+        first ':' (for example "Size (interno):M/L" -> "Size (interno)", "M/L").
+    """
+    id_header = find_column(headers, "idProducto")
+    combo_header = find_column(headers, "combinacion")
+    gallery_cols = [f"gallery_{i}" for i in range(1, MAX_IMAGE_COLUMNS + 1)]
+    new_cols = gallery_cols + ["variant_option_name", "variant_option_value"]
+    clash = [c for c in new_cols if c in headers]
+    if clash:
+        raise FeedError("Supplier feed already has columns named: " + ", ".join(clash))
+
+    galleries = {}
+    for i, row in enumerate(rows):
+        key = row[id_header] if id_header else f"row-{i}"
+        seen = galleries.setdefault(key, [])
+        for url in split_images(row.get(images_header, "")):
+            if url not in seen:
+                seen.append(url)
+
+    improved = 0
+    for i, row in enumerate(rows):
+        key = row[id_header] if id_header else f"row-{i}"
+        urls = galleries[key]
+        if len(urls) > len(split_images(row.get(images_header, ""))):
+            improved += 1
+        for n, col in enumerate(gallery_cols):
+            row[col] = urls[n] if n < len(urls) else ""
+        combo = (row.get(combo_header, "") if combo_header else "").strip()
+        name, sep, value = combo.partition(":")
+        row["variant_option_name"] = name.strip() if sep else ""
+        row["variant_option_value"] = value.strip() if sep else ""
+    print(f"[gallery] {improved} rows received additional images from other rows "
+          f"of the same product")
+    return headers + new_cols, rows
 
 
 # --------------------------------------------------------------------------
@@ -231,6 +284,7 @@ def main():
         raise FeedError("products: feed is empty; refusing to publish")
     p_cols = resolve_columns(p_headers, PRODUCT_REQUIRED, "products")
     out_headers, out_rows, image_count = build_products(p_headers, p_rows, p_cols["imagenes"])
+    out_headers, out_rows = add_stockeo_columns(out_headers, out_rows, p_cols["imagenes"])
 
     s_headers, s_rows = parse_csv(stock_raw, "stock")
     if not s_rows:
@@ -243,7 +297,7 @@ def main():
     n_products = verify_output(OUT / "products.csv")
     n_stock = verify_output(OUT / "stock.csv")
     print(f"OK: {n_products} products; {image_count} image URLs "
-          f"({len(out_headers) - len(p_headers)} image columns); {n_stock} stock rows")
+          f"({len(out_headers) - len(p_headers)} added columns); {n_stock} stock rows")
 
 
 if __name__ == "__main__":
