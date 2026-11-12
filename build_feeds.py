@@ -12,6 +12,7 @@ Writes public/feeds/products.csv and public/feeds/stock.csv.
 """
 import csv
 import io
+import os
 import re
 import sys
 import time
@@ -25,6 +26,7 @@ STOCK_URL = "https://www.lovecherry.es/modules/imaxexportcsv/export/stock.csv"
 OUT = Path("public/feeds")
 
 DELIMITER = ";"
+MAX_IMAGE_COLUMNS = 20
 USER_AGENT = "Mozilla/5.0 (compatible; MeerotikFeed/1.1; +https://github.com/enlisa)"
 ATTEMPTS = 5
 BACKOFF_SECONDS = 5
@@ -159,7 +161,9 @@ def split_images(value):
 def build_products(headers, rows, images_header):
     """Add image_1..image_N columns; never overwrite an existing column."""
     split = [split_images(row.get(images_header, "")) for row in rows]
-    width = max([len(urls) for urls in split] + [1])
+    # Only the extra image_N columns are capped; the original `imagenes`
+    # column keeps the complete, unchanged list of URLs.
+    width = min(max([len(urls) for urls in split] + [1]), MAX_IMAGE_COLUMNS)
     prefix = "image_"
     if any(f"{prefix}{i}" in headers for i in range(1, width + 1)):
         prefix = "imagen_"                           # avoid clobbering supplier columns
@@ -172,7 +176,12 @@ def build_products(headers, rows, images_header):
         for i, col in enumerate(image_cols):
             item[col] = urls[i] if i < len(urls) else ""
         out_rows.append(item)
-    return headers + image_cols, out_rows, sum(len(u) for u in split)
+    total = sum(len(u) for u in split)
+    beyond = sum(max(len(u) - MAX_IMAGE_COLUMNS, 0) for u in split)
+    if beyond:
+        print(f"[images] {beyond} URLs beyond image_{MAX_IMAGE_COLUMNS} are only kept in "
+              f"the original 'imagenes' column")
+    return headers + image_cols, out_rows, total
 
 
 # --------------------------------------------------------------------------
@@ -199,9 +208,23 @@ def verify_output(path):
     return lines - 1
 
 
+def write_debug_sample(product_raw, stock_raw):
+    """TEMPORARY: keep the first bytes of the untouched supplier files so the
+    raw values can be compared with the generated feeds. Enabled only via the
+    FEEDS_DEBUG_RAW_BYTES environment variable."""
+    n = int(os.environ.get("FEEDS_DEBUG_RAW_BYTES", "0") or 0)
+    if n <= 0:
+        return
+    debug = OUT.parent / "debug"
+    debug.mkdir(parents=True, exist_ok=True)
+    (debug / "products_raw_head.csv").write_bytes(product_raw[:n])
+    (debug / "stock_raw_head.csv").write_bytes(stock_raw[:n])
+
+
 def main():
     product_raw = fetch(PRODUCT_URL)
     stock_raw = fetch(STOCK_URL)
+    write_debug_sample(product_raw, stock_raw)
 
     p_headers, p_rows = parse_csv(product_raw, "products")
     if not p_rows:

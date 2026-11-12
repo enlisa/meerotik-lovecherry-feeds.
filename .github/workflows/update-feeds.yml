@@ -32,6 +32,9 @@ jobs:
           python-version: "3.12"
 
       - name: Fetch and transform supplier CSVs
+        env:
+          # TEMPORARY (remove before merging to main): keep raw supplier head for comparison
+          FEEDS_DEBUG_RAW_BYTES: "400000"
         run: python build_feeds.py
 
       - name: Verify both feed files exist
@@ -55,6 +58,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add public/feeds/
+          git add public/debug/ 2>/dev/null || true
           if git diff --cached --quiet; then
             echo "No feed changes."
             exit 0
