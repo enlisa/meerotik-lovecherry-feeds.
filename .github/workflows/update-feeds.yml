@@ -9,6 +9,7 @@ on:
       - fix/feeds
     paths-ignore:
       - "public/feeds/**"
+      - "public/reports/**"
 
 permissions:
   contents: write
@@ -33,8 +34,9 @@ jobs:
 
       - name: Fetch and transform supplier CSVs
         env:
-          # TEMPORARY (remove before merging to main): keep raw supplier head for comparison
-          FEEDS_DEBUG_RAW_BYTES: "400000"
+          # Reachability check of a random sample of image URLs (slow, sequential,
+          # never fails the build; result goes to public/reports/feed_report.json).
+          FEEDS_CHECK_URL_SAMPLE: "150"
         run: python build_feeds.py
 
       - name: Verify both feed files exist
@@ -43,6 +45,13 @@ jobs:
             test -s "$f" || { echo "::error::Missing or empty $f"; exit 1; }
             echo "$f: $(wc -l < "$f") lines, $(wc -c < "$f") bytes"
           done
+          head -1 public/feeds/products.csv | grep -q "gallery_8" \
+            || { echo "::error::gallery_8 column missing in products.csv"; exit 1; }
+          if head -1 public/feeds/products.csv | grep -q "gallery_9"; then
+            echo "::error::unexpected gallery_9 column in products.csv"; exit 1
+          fi
+          test -s public/reports/feed_report.json || { echo "::error::feed_report.json missing"; exit 1; }
+          cat public/reports/feed_report.json
 
       - name: Upload feeds as artifact
         uses: actions/upload-artifact@v4
@@ -57,8 +66,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add public/feeds/
-          git add public/debug/ 2>/dev/null || true
+          git add public/feeds/ public/reports/
           if git diff --cached --quiet; then
             echo "No feed changes."
             exit 0
