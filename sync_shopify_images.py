@@ -32,6 +32,7 @@ import os
 import sys
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from collections import Counter, defaultdict
 from concurrent.futures import ThreadPoolExecutor
@@ -56,10 +57,30 @@ class ApiError(RuntimeError):
 # Shopify GraphQL client
 # --------------------------------------------------------------------------
 class Shopify:
-    def __init__(self, domain, token, base=None):
+    def __init__(self, domain, token=None, base=None, client_id=None, client_secret=None):
         root = base or f"https://{domain}"
+        self.root = root
         self.url = f"{root}/admin/api/{API_VERSION}/graphql.json"
         self.token = token
+        self._cid, self._secret = client_id, client_secret
+        if not self.token:
+            self.refresh_token()
+
+    def refresh_token(self):
+        """Dev Dashboard apps: client-credentials grant (token valid 24 h)."""
+        if not (self._cid and self._secret):
+            raise ApiError("401 and no client credentials to refresh the token")
+        data = urllib.parse.urlencode({"grant_type": "client_credentials",
+                                       "client_id": self._cid,
+                                       "client_secret": self._secret}).encode()
+        req = urllib.request.Request(f"{self.root}/admin/oauth/access_token", data=data, headers={
+            "Content-Type": "application/x-www-form-urlencoded"})
+        try:
+            with urllib.request.urlopen(req, timeout=60) as resp:
+                self.token = json.load(resp)["access_token"]
+        except urllib.error.HTTPError as exc:      # never print the body of a credentials call
+            raise ApiError(f"token request failed: HTTP {exc.code} (check client id/secret, "
+                           "that the app is installed on the store and in the same organization)")
 
     def gql(self, query, variables=None, retries=6):
         body = json.dumps({"query": query, "variables": variables or {}}).encode()
@@ -76,7 +97,10 @@ class Shopify:
                 if exc.code in (429, 500, 502, 503, 504):
                     time.sleep(min(2 ** attempt, 30))
                     continue
-                raise ApiError(f"HTTP {exc.code}: {exc.read()[:300]!r}")
+                if exc.code == 401 and self._cid and attempt < retries - 1:
+                    self.refresh_token()
+                    continue
+                raise ApiError(f"HTTP {exc.code}")
             except (urllib.error.URLError, TimeoutError, OSError) as exc:
                 last = f"network: {exc}"
                 time.sleep(min(2 ** attempt, 30))
@@ -368,10 +392,18 @@ def main():
     ap.add_argument("--api-base", default=None, help="testing only")
     args = ap.parse_args()
 
-    domain, token = os.environ.get("SHOPIFY_STORE_DOMAIN", ""), os.environ.get("SHOPIFY_ADMIN_TOKEN", "")
-    if not (token and (domain or args.api_base)):
-        sys.exit("ERROR: set SHOPIFY_STORE_DOMAIN and SHOPIFY_ADMIN_TOKEN (GitHub repository secrets)")
-    shop = Shopify(domain, token, args.api_base)
+    domain = os.environ.get("SHOPIFY_STORE_DOMAIN", "").strip()
+    token = os.environ.get("SHOPIFY_ADMIN_TOKEN", "").strip()
+    cid = os.environ.get("SHOPIFY_CLIENT_ID", "").strip()
+    secret = os.environ.get("SHOPIFY_CLIENT_SECRET", "").strip()
+    if not domain.endswith(".myshopify.com") and not args.api_base:
+        sys.exit("ERROR: SHOPIFY_STORE_DOMAIN must look like xxx.myshopify.com")
+    if not (token or (cid and secret)):
+        sys.exit("ERROR: set SHOPIFY_CLIENT_ID + SHOPIFY_CLIENT_SECRET (GitHub secrets)")
+    try:
+        shop = Shopify(domain, token or None, args.api_base, cid, secret)
+    except ApiError as exc:
+        sys.exit(f"ERROR: {exc}")
     started = time.monotonic()
     report = {"mode": "apply" if args.apply else "dry_run", "feed_products": 0,
               "matched_products": 0, "products_checked": 0, "products_already_complete": 0,
