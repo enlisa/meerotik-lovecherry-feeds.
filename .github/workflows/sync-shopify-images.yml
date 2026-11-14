@@ -65,6 +65,9 @@ jobs:
           args="--limit ${{ inputs.limit || 200 }}"
           if [ "${{ inputs.apply }}" = "true" ]; then args="$args --apply"; fi
           # Push trigger: first line of sync-trigger.txt "apply limit=N" = authorised capped apply
+          if [ "${{ github.event_name }}" = "push" ] && [ "$(head -1 sync-trigger.txt)" = "analyze" ]; then
+            python analyze_catalog.py; exit 0
+          fi
           if [ "${{ github.event_name }}" = "push" ] && [ "$(head -1 sync-trigger.txt)" = "apply all" ]; then
             args="--limit 0 --apply"   # full catalog, explicitly authorised by the owner
           elif [ "${{ github.event_name }}" = "push" ] && grep -Eq '^apply limit=[0-9]+$' <(head -1 sync-trigger.txt); then

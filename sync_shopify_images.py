@@ -120,7 +120,7 @@ class Shopify:
         raise ApiError(f"giving up after {retries} attempts ({last})")
 
 
-EXPORT_QUERY = """{ products { edges { node { id title vendor status
+EXPORT_QUERY = """{ products { edges { node { id title vendor status createdAt
   variants { edges { node { id sku } } }
   media { edges { node { id status ... on MediaImage { originalSource { fileSize } } } } } } } } }"""
 
@@ -159,7 +159,7 @@ def export_products(shop):
                 gid, parent = node.get("id", ""), node.get("__parentId")
                 if parent is None and "/Product/" in gid:
                     products[gid] = {"id": gid, "title": node.get("title", ""),
-                                     "vendor": node.get("vendor") or "", "status": node.get("status"), "skus": set(), "media": []}
+                                     "vendor": node.get("vendor") or "", "created": node.get("createdAt"), "status": node.get("status"), "skus": set(), "media": []}
                 elif parent in products and "/ProductVariant/" in gid:
                     sku = (node.get("sku") or "").strip()
                     if sku:
