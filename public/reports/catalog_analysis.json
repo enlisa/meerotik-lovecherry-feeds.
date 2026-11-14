@@ -1,0 +1,45 @@
+{
+  "generated_at_utc": "2026-11-14T16:48:39Z",
+  "shopify_products": 24095,
+  "feed_products": 11772,
+  "skipped_total": 1072,
+  "skipped_reasons": {
+    "duplicate_products_not_identical": 1069,
+    "ambiguous_reference": 3
+  },
+  "skipped_not_identical_breakdown": {
+    "not_identical:sku_set": 1068,
+    "not_identical:title": 1
+  },
+  "skipped_zero_stock": 327,
+  "skipped_in_stock": 745,
+  "skipped_in_stock_units": 10614,
+  "skipped_shopify_copy_counts": {
+    "6": 291,
+    "4": 406,
+    "8": 141,
+    "7": 1,
+    "5": 3,
+    "2": 159,
+    "10": 6,
+    "3": 38,
+    "11": 1,
+    "9": 24,
+    "12": 2
+  },
+  "exact_duplicate_clusters": 7823,
+  "exact_duplicate_cluster_sizes": {
+    "2": 7556,
+    "3": 267
+  },
+  "exact_duplicate_extra_products": 8090,
+  "exact_duplicate_all_draft": 7823,
+  "exact_duplicate_created_gap_seconds": {
+    "min": 28.0,
+    "median": 109.0,
+    "p95": 168.0,
+    "max": 175.0
+  },
+  "exact_duplicate_in_stock_clusters": 5081,
+  "stock_csv_rows": 29105
+}
