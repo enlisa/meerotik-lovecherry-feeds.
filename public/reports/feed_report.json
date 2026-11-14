@@ -1,35 +1,35 @@
 {
-  "product_rows": 13564,
-  "distinct_products": 11782,
+  "product_rows": 13554,
+  "distinct_products": 11772,
   "products_by_gallery_image_count": {
     "0": 6,
-    "1": 2251,
-    "2": 1599,
-    "3": 1370,
+    "1": 2244,
+    "2": 1597,
+    "3": 1369,
     "4": 1250,
-    "5": 1316,
+    "5": 1317,
     "6": 1016,
     "7": 754,
-    "8": 2220
+    "8": 2219
   },
-  "products_with_more_than_8_valid_unique_images": 1669,
-  "raw_image_urls": 56144,
+  "products_with_more_than_8_valid_unique_images": 1668,
+  "raw_image_urls": 56128,
   "invalid_urls": 0,
   "invalid_url_examples": [],
   "duplicate_urls_removed_total": 325,
   "duplicates_within_a_single_row": 0,
   "duplicates_across_variant_rows": 325,
   "valid_urls_without_image_extension": 0,
-  "rows_that_gained_images_from_other_variant_rows": 1703,
+  "rows_that_gained_images_from_other_variant_rows": 1702,
   "url_sample_check": {
     "sampled": 150,
     "checked": 150,
-    "pool_size": 50273,
+    "pool_size": 50256,
     "status_counts": {
       "200": 150
     },
     "problems": []
   },
-  "generated_at_utc": "2026-11-13T20:32:07Z",
+  "generated_at_utc": "2026-11-14T09:06:49Z",
   "stock_rows": 29417
 }
