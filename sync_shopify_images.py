@@ -30,6 +30,7 @@ import csv
 import json
 import os
 import sys
+import threading
 import time
 import urllib.error
 import urllib.parse
@@ -40,9 +41,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 API_VERSION = "2025-01"
-BATCH_URLS = 4                 # images per productUpdate call
-CHUNK_PRODUCTS = 10            # products submitted, then verified together
-PAUSE_BETWEEN_CALLS = 0.7      # seconds, keeps the supplier host happy
+BATCH_URLS = 8                 # images per productUpdate call
+CHUNK_PRODUCTS = 24            # products submitted, then verified together
+PAUSE_BETWEEN_CALLS = 0.3      # seconds, keeps the supplier host happy
 POLL_SECONDS = 4
 POLL_TIMEOUT = 150
 USER_AGENT = "Mozilla/5.0 (compatible; MeerotikImageSync/1.0)"
@@ -119,7 +120,7 @@ class Shopify:
         raise ApiError(f"giving up after {retries} attempts ({last})")
 
 
-EXPORT_QUERY = """{ products { edges { node { id title status
+EXPORT_QUERY = """{ products { edges { node { id title vendor status
   variants { edges { node { id sku } } }
   media { edges { node { id status ... on MediaImage { originalSource { fileSize } } } } } } } } }"""
 
@@ -158,7 +159,7 @@ def export_products(shop):
                 gid, parent = node.get("id", ""), node.get("__parentId")
                 if parent is None and "/Product/" in gid:
                     products[gid] = {"id": gid, "title": node.get("title", ""),
-                                     "status": node.get("status"), "skus": set(), "media": []}
+                                     "vendor": node.get("vendor") or "", "status": node.get("status"), "skus": set(), "media": []}
                 elif parent in products and "/ProductVariant/" in gid:
                     sku = (node.get("sku") or "").strip()
                     if sku:
@@ -244,8 +245,14 @@ def load_feed(path):
     return groups, ambiguous
 
 
+MAX_DUPLICATES = 4
+
+
 def match(group, products, sku_index, ambiguous):
-    """Return (shopify_product, None) or (None, reason)."""
+    """Return ([shopify_products], None) or (None, reason).
+
+    One product: plain match. Several products are accepted only if they are
+    exact duplicates (same title, vendor and SKU set); anything else is skipped."""
     if group["refs"] & ambiguous:
         return None, "ambiguous_reference"
     found = set()
@@ -253,12 +260,18 @@ def match(group, products, sku_index, ambiguous):
         found |= sku_index.get(ref, set())
     if not found:
         return None, "no_match"
-    if len(found) > 1:
-        return None, "multiple_shopify_products"
-    product = products[next(iter(found))]
-    if not product["skus"] <= group["refs"]:
+    prods = [products[i] for i in sorted(found)]
+    if any(not p["skus"] <= group["refs"] for p in prods):
         return None, "mixed_product"
-    return product, None
+    if len(prods) == 1:
+        return prods, None
+    signatures = {(p["title"].strip().lower(), p["vendor"].strip().lower(),
+                   frozenset(p["skus"])) for p in prods}
+    if len(signatures) != 1:
+        return None, "duplicate_products_not_identical"
+    if len(prods) > MAX_DUPLICATES:
+        return None, "too_many_duplicates"
+    return prods, None
 
 
 def plan(group, product):
@@ -266,6 +279,9 @@ def plan(group, product):
     ready = [m for m in product["media"] if m["status"] == "READY" and m["size"]]
     busy = [m for m in product["media"] if m["status"] in ("UPLOADED", "PROCESSING")]
     result = {"missing": [], "present": [], "dead": [], "attention": None}
+    if len(ready) >= len(group["gallery"]):          # already has as many images as the feed
+        result["present"] = list(group["gallery"])
+        return result
     if busy:
         result["attention"] = "media_still_processing"
         return result
@@ -432,27 +448,46 @@ def main():
         products, sku_index = export_products(shop)
         report["shopify_products_exported"] = len(products)
         todo = []
+        matched_groups = duplicate_clusters = 0
         for g in groups.values():
-            product, reason = match(g, products, sku_index, ambiguous)
+            prods, reason = match(g, products, sku_index, ambiguous)
             if reason:
                 skipped[reason] += 1
                 if len(examples[reason]) < 15:
                     examples[reason].append(sorted(g["refs"])[:3])
             else:
-                todo.append((g, product))
-        report["matched_products"] = len(todo)
+                matched_groups += 1
+                duplicate_clusters += len(prods) > 1
+                todo += [(g, pr) for pr in prods]
+        report["matched_products"] = matched_groups
+        report["matched_via_exact_duplicates"] = duplicate_clusters
+        report["shopify_products_in_scope"] = len(todo)
         if args.limit:
             todo = todo[:args.limit]
         deadline = started + args.budget_minutes * 60
+        lock = threading.Lock()
+
+        def work(item):
+            (g, product), p = item
+            ref = sorted(g["refs"])[0]
+            try:
+                pairs = apply_product(shop, product, p["missing"], report, ref)
+                finish_product(shop, product, pairs, report, ref)
+                with lock:
+                    report["products_updated"] += 1
+            except ApiError as exc:
+                with lock:
+                    report["products_needing_attention"].append(
+                        {"reference": ref, "reason": f"api_error: {str(exc)[:160]}"})
 
         for start in range(0, len(todo), CHUNK_PRODUCTS):
             if time.monotonic() > deadline:
                 report["not_processed_time_budget"] = len(todo) - start
                 break
             chunk = todo[start:start + CHUNK_PRODUCTS]
-            with ThreadPoolExecutor(max_workers=6) as pool:
+            with ThreadPoolExecutor(max_workers=12) as pool:
                 plans = list(pool.map(lambda gp: plan(*gp), chunk))
-            submitted = []
+            jobs = []
             for (g, product), p in zip(chunk, plans):
                 ref = sorted(g["refs"])[0]
                 report["products_checked"] += 1
@@ -462,27 +497,17 @@ def main():
                 if p["attention"]:
                     report["products_needing_attention"].append(
                         {"reference": ref, "reason": p["attention"]})
-                    continue
-                if not p["missing"]:
+                elif not p["missing"]:
                     report["products_already_complete"] += 1
-                    continue
-                report["products_needing_images"] += 1
-                if not args.apply:
-                    report["images_still_to_add"] += len(p["missing"])
-                    continue
-                try:
-                    pairs = apply_product(shop, product, p["missing"], report, ref)
-                    submitted.append((product, pairs, ref))
-                    report["products_updated"] += 1
-                except ApiError as exc:
-                    report["products_needing_attention"].append(
-                        {"reference": ref, "reason": f"api_error: {str(exc)[:160]}"})
-            for product, pairs, ref in submitted:
-                try:
-                    finish_product(shop, product, pairs, report, ref)
-                except ApiError as exc:
-                    report["products_needing_attention"].append(
-                        {"reference": ref, "reason": f"api_error: {str(exc)[:160]}"})
+                else:
+                    report["products_needing_images"] += 1
+                    if args.apply:
+                        jobs.append(((g, product), p))
+                    else:
+                        report["images_still_to_add"] += len(p["missing"])
+            if jobs:
+                with ThreadPoolExecutor(max_workers=4) as pool:
+                    list(pool.map(work, jobs))
             if (start // CHUNK_PRODUCTS) % 20 == 0:
                 print(f"[progress] {report['products_checked']}/{len(todo)} products, "
                       f"{report['images_added']} images added", flush=True)

@@ -12,6 +12,9 @@ on:
       limit:
         description: "Max matched products to process (0 = all)"
         default: "0"
+      round:
+        description: "Internal: continuation counter (max 12 chained runs)"
+        default: "1"
 
   # Push of this file = authentication test + small DRY RUN (never writes).
   push:
@@ -20,6 +23,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 concurrency:
   group: sync-shopify-images
@@ -60,19 +64,19 @@ jobs:
         run: |
           args="--limit ${{ inputs.limit || 200 }}"
           if [ "${{ inputs.apply }}" = "true" ]; then args="$args --apply"; fi
-          python sync_shopify_images.py $args
+          python sync_shopify_images.py $args --report public/reports/shopify_image_sync_${{ github.run_id }}.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: shopify-image-sync-report
-          path: public/reports/shopify_image_sync_report.json
+          path: public/reports/shopify_image_sync_*.json
           if-no-files-found: ignore
       - name: Commit report
         if: always()
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add public/reports/shopify_image_sync_report.json || true
+          git add public/reports/ || true
           git diff --cached --quiet && exit 0
           git commit -m "Shopify image sync report"
           for a in 1 2 3; do
@@ -80,3 +84,15 @@ jobs:
             git push origin "HEAD:${{ github.ref_name }}" && exit 0
             sleep $((a*5))
           done
+      - name: Continue automatically if the time budget ran out
+        if: always() && inputs.apply == true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          left=$(python3 -c "import json;print(json.load(open('public/reports/shopify_image_sync_${{ github.run_id }}.json')).get('not_processed_time_budget',0))")
+          round=${{ inputs.round || 1 }}
+          echo "not processed: $left (round $round)"
+          if [ "$left" -gt 0 ] && [ "$round" -lt 12 ]; then
+            gh workflow run sync-shopify-images.yml --ref "${{ github.ref_name }}" \
+              -f apply=true -f limit=0 -f round=$((round+1))
+          fi
