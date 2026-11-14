@@ -1,0 +1,210 @@
+{
+  "mode": "apply",
+  "feed_products": 11766,
+  "matched_products": 10695,
+  "products_checked": 20,
+  "products_already_complete": 0,
+  "products_needing_images": 20,
+  "products_updated": 20,
+  "images_added": 140,
+  "images_recovered_by_retry": 0,
+  "duplicates_skipped": 20,
+  "images_still_to_add": 0,
+  "skipped_unmatched": {
+    "duplicate_products_not_identical": {
+      "count": 1070,
+      "examples": [
+        [
+          "5901721607774",
+          "5901721607781",
+          "591721607798"
+        ],
+        [
+          "5901721607804",
+          "5901721607811",
+          "5901721607828"
+        ],
+        [
+          "5901721607835",
+          "5901721607842",
+          "5901721607859"
+        ],
+        [
+          "017036645334",
+          "017036645341"
+        ],
+        [
+          "4061504016474",
+          "4061504016481",
+          "4061504016498"
+        ],
+        [
+          "4061504016948",
+          "4061504016955",
+          "4061504016962"
+        ],
+        [
+          "4061504016979",
+          "4061504016986",
+          "4061504016993"
+        ],
+        [
+          "4061504017501",
+          "4061504017518",
+          "4061504017525"
+        ],
+        [
+          "4061504015408",
+          "4061504015415"
+        ],
+        [
+          "4061504015422",
+          "4061504015439"
+        ],
+        [
+          "4061504015446",
+          "4061504015453"
+        ],
+        [
+          "4061504015460",
+          "4061504015477"
+        ],
+        [
+          "4061504015545",
+          "4061504015552"
+        ],
+        [
+          "4061504017563",
+          "4061504017570",
+          "4061504017587"
+        ],
+        [
+          "4061504017594",
+          "4061504017600",
+          "4061504017617"
+        ]
+      ]
+    },
+    "ambiguous_reference": {
+      "count": 1,
+      "examples": [
+        [
+          "BI-014647W"
+        ]
+      ]
+    }
+  },
+  "failed_images": [],
+  "dead_source_urls": [],
+  "products_needing_attention": [],
+  "not_processed_time_budget": 0,
+  "shopify_products_exported": 24095,
+  "matched_via_exact_duplicates": 7818,
+  "shopify_products_in_scope": 18780,
+  "updated_products": [
+    {
+      "reference": "LT-457",
+      "product": "gid://shopify/Product/15950845772116",
+      "added": 7
+    },
+    {
+      "reference": "LT-457",
+      "product": "gid://shopify/Product/15950841905492",
+      "added": 7
+    },
+    {
+      "reference": "LT-461",
+      "product": "gid://shopify/Product/15950841643348",
+      "added": 7
+    },
+    {
+      "reference": "LT-461",
+      "product": "gid://shopify/Product/15950845542740",
+      "added": 7
+    },
+    {
+      "reference": "LT-463",
+      "product": "gid://shopify/Product/15950841512276",
+      "added": 7
+    },
+    {
+      "reference": "LT-462",
+      "product": "gid://shopify/Product/15950845444436",
+      "added": 7
+    },
+    {
+      "reference": "LT-462",
+      "product": "gid://shopify/Product/15950841577812",
+      "added": 7
+    },
+    {
+      "reference": "LT-463",
+      "product": "gid://shopify/Product/15950845378900",
+      "added": 7
+    },
+    {
+      "reference": "BI-014654-4",
+      "product": "gid://shopify/Product/15950767554900",
+      "added": 7
+    },
+    {
+      "reference": "BI-014654-3",
+      "product": "gid://shopify/Product/15950767522132",
+      "added": 7
+    },
+    {
+      "reference": "BI-014653-4",
+      "product": "gid://shopify/Product/15950767653204",
+      "added": 7
+    },
+    {
+      "reference": "BI-014654-2",
+      "product": "gid://shopify/Product/15950767587668",
+      "added": 7
+    },
+    {
+      "reference": "BI-014622-3",
+      "product": "gid://shopify/Product/15950767685972",
+      "added": 7
+    },
+    {
+      "reference": "BI-014653-3",
+      "product": "gid://shopify/Product/15950767620436",
+      "added": 7
+    },
+    {
+      "reference": "BI-014653-2",
+      "product": "gid://shopify/Product/15950767718740",
+      "added": 7
+    },
+    {
+      "reference": "BI-014582W-LED",
+      "product": "gid://shopify/Product/15950767751508",
+      "added": 7
+    },
+    {
+      "reference": "BI-014362W-LED",
+      "product": "gid://shopify/Product/15950767817044",
+      "added": 7
+    },
+    {
+      "reference": "BI-014362W-LED-1",
+      "product": "gid://shopify/Product/15950767784276",
+      "added": 7
+    },
+    {
+      "reference": "BW-008105NRG-1",
+      "product": "gid://shopify/Product/15950767980884",
+      "added": 7
+    },
+    {
+      "reference": "BW-008106NRG-1",
+      "product": "gid://shopify/Product/15950767948116",
+      "added": 7
+    }
+  ],
+  "generated_at_utc": "2026-11-14T09:35:13Z",
+  "products_needing_attention_count": 0,
+  "failed_images_count": 0,
+  "dead_source_urls_count": 0
+}
