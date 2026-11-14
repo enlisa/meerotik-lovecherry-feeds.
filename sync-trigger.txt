@@ -1,1 +1,1 @@
-apply limit=20
+apply all
