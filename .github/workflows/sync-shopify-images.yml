@@ -100,6 +100,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          test -f public/reports/shopify_image_sync_${{ github.run_id }}.json || { echo "no sync report (analysis run) - nothing to continue"; exit 0; }
           left=$(python3 -c "import json;print(json.load(open('public/reports/shopify_image_sync_${{ github.run_id }}.json')).get('not_processed_time_budget',0))")
           round=${{ inputs.round || 1 }}
           echo "not processed: $left (round $round)"
