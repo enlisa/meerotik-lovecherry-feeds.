@@ -389,6 +389,8 @@ def main():
     ap.add_argument("--apply", action="store_true", help="write to Shopify (default: dry run)")
     ap.add_argument("--limit", type=int, default=0, help="max matched products to process (0 = all)")
     ap.add_argument("--budget-minutes", type=float, default=320)
+    ap.add_argument("--auth-test", action="store_true",
+                    help="only authenticate and print shop, app and granted scopes")
     ap.add_argument("--api-base", default=None, help="testing only")
     args = ap.parse_args()
 
@@ -404,6 +406,16 @@ def main():
         shop = Shopify(domain, token or None, args.api_base, cid, secret)
     except ApiError as exc:
         sys.exit(f"ERROR: {exc}")
+    if args.auth_test:
+        try:
+            d = shop.gql("{ shop { name myshopifyDomain } currentAppInstallation "
+                         "{ app { title } accessScopes { handle } } }")
+        except ApiError as exc:
+            sys.exit(f"AUTH TEST FAILED: {exc}")
+        print("AUTH OK shop:", d["shop"]["name"], "|", d["shop"]["myshopifyDomain"])
+        print("app:", d["currentAppInstallation"]["app"]["title"])
+        print("scopes:", sorted(x["handle"] for x in d["currentAppInstallation"]["accessScopes"]))
+        return
     started = time.monotonic()
     report = {"mode": "apply" if args.apply else "dry_run", "feed_products": 0,
               "matched_products": 0, "products_checked": 0, "products_already_complete": 0,

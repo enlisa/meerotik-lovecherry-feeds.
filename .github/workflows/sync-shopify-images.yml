@@ -13,6 +13,11 @@ on:
         description: "Max matched products to process (0 = all)"
         default: "0"
 
+  # Push of this file = authentication test + small DRY RUN (never writes).
+  push:
+    branches: [fix/feeds]
+    paths: ["sync-trigger.txt"]
+
 permissions:
   contents: write
 
@@ -29,13 +34,31 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Check which secrets exist (names only, never values)
+        env:
+          A: ${{ secrets.SHOPIFY_STORE_DOMAIN }}
+          B: ${{ secrets.SHOPIFY_CLIENT_ID }}
+          C: ${{ secrets.SHOPIFY_CLIENT_SECRET }}
+        run: |
+          miss=0
+          for n in A:SHOPIFY_STORE_DOMAIN B:SHOPIFY_CLIENT_ID C:SHOPIFY_CLIENT_SECRET; do
+            v="${n%%:*}"; name="${n#*:}"
+            if [ -n "${!v}" ]; then echo "$name: set"; else echo "::error::$name: MISSING"; miss=1; fi
+          done
+          exit $miss
+      - name: Authentication test
+        env:
+          SHOPIFY_STORE_DOMAIN: ${{ secrets.SHOPIFY_STORE_DOMAIN }}
+          SHOPIFY_CLIENT_ID: ${{ secrets.SHOPIFY_CLIENT_ID }}
+          SHOPIFY_CLIENT_SECRET: ${{ secrets.SHOPIFY_CLIENT_SECRET }}
+        run: python sync_shopify_images.py --auth-test
       - name: Sync images
         env:
           SHOPIFY_STORE_DOMAIN: ${{ secrets.SHOPIFY_STORE_DOMAIN }}
           SHOPIFY_CLIENT_ID: ${{ secrets.SHOPIFY_CLIENT_ID }}
           SHOPIFY_CLIENT_SECRET: ${{ secrets.SHOPIFY_CLIENT_SECRET }}
         run: |
-          args="--limit ${{ inputs.limit }}"
+          args="--limit ${{ inputs.limit || 200 }}"
           if [ "${{ inputs.apply }}" = "true" ]; then args="$args --apply"; fi
           python sync_shopify_images.py $args
       - uses: actions/upload-artifact@v4
