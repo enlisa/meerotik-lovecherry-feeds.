@@ -64,6 +64,12 @@ jobs:
         run: |
           args="--limit ${{ inputs.limit || 200 }}"
           if [ "${{ inputs.apply }}" = "true" ]; then args="$args --apply"; fi
+          # Push trigger: first line of sync-trigger.txt "apply limit=N" = authorised capped apply
+          if [ "${{ github.event_name }}" = "push" ] && grep -Eq '^apply limit=[0-9]+$' <(head -1 sync-trigger.txt); then
+            n=$(head -1 sync-trigger.txt | sed 's/.*limit=//')
+            [ "$n" -ge 1 ] && [ "$n" -le 20 ] || { echo "::error::capped apply allows limit 1-20"; exit 1; }
+            args="--limit $n --apply"
+          fi
           python sync_shopify_images.py $args --report public/reports/shopify_image_sync_${{ github.run_id }}.json
       - uses: actions/upload-artifact@v4
         if: always()

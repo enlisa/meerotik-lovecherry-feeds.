@@ -475,6 +475,8 @@ def main():
                 finish_product(shop, product, pairs, report, ref)
                 with lock:
                     report["products_updated"] += 1
+                    report.setdefault("updated_products", []).append(
+                        {"reference": ref, "product": product["id"], "added": len(p["missing"])})
             except ApiError as exc:
                 with lock:
                     report["products_needing_attention"].append(
