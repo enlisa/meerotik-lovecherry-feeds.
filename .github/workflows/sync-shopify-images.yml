@@ -65,7 +65,9 @@ jobs:
           args="--limit ${{ inputs.limit || 200 }}"
           if [ "${{ inputs.apply }}" = "true" ]; then args="$args --apply"; fi
           # Push trigger: first line of sync-trigger.txt "apply limit=N" = authorised capped apply
-          if [ "${{ github.event_name }}" = "push" ] && grep -Eq '^apply limit=[0-9]+$' <(head -1 sync-trigger.txt); then
+          if [ "${{ github.event_name }}" = "push" ] && [ "$(head -1 sync-trigger.txt)" = "apply all" ]; then
+            args="--limit 0 --apply"   # full catalog, explicitly authorised by the owner
+          elif [ "${{ github.event_name }}" = "push" ] && grep -Eq '^apply limit=[0-9]+$' <(head -1 sync-trigger.txt); then
             n=$(head -1 sync-trigger.txt | sed 's/.*limit=//')
             [ "$n" -ge 1 ] && [ "$n" -le 20 ] || { echo "::error::capped apply allows limit 1-20"; exit 1; }
             args="--limit $n --apply"
@@ -91,7 +93,7 @@ jobs:
             sleep $((a*5))
           done
       - name: Continue automatically if the time budget ran out
-        if: always() && inputs.apply == true
+        if: always() && (inputs.apply == true || (github.event_name == 'push' && hashFiles('sync-trigger.txt') != '' ))
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
