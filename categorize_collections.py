@@ -224,7 +224,7 @@ def main():
         for h, (parent, titles, _r) in SUBS.items():
             cid = ids.get(h) or collection_ids_for(shop, [h]).get(h)
             if not cid:
-                d = shop.gql("mutation($c:CollectionCreateInput!){collectionCreate(collection:$c){collection{id} userErrors{message}}}",
+                d = shop.gql("mutation($c:CollectionInput!){collectionCreate(input:$c){collection{id} userErrors{message}}}",
                              {"c": {"title": titles["de"], "handle": h}})["collectionCreate"]
                 if d.get("userErrors"):
                     sub_report[h] = f"create errors: {d['userErrors'][:2]}"; continue
