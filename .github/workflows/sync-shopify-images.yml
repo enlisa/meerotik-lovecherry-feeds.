@@ -69,10 +69,10 @@ jobs:
             python activate_products.py; exit 0
           fi
           if [ "${{ github.event_name }}" = "push" ] && grep -Eq '^activate apply limit=[0-9]+$' <(head -1 sync-trigger.txt); then
-            n=$(head -1 sync-trigger.txt | sed 's/.*limit=//'); python activate_products.py --apply --limit $n; exit 0
+            n=$(head -1 sync-trigger.txt | sed 's/.*limit=//'); python activate_products.py --apply --no-publish --limit $n; exit 0
           fi
           if [ "${{ github.event_name }}" = "push" ] && [ "$(head -1 sync-trigger.txt)" = "activate apply all" ]; then
-            python activate_products.py --apply --publish-collections; exit 0
+            python activate_products.py --apply --no-publish; exit 0
           fi
           if [ "${{ github.event_name }}" = "push" ] && [ "$(head -1 sync-trigger.txt)" = "categorize" ]; then
             python categorize_collections.py; exit 0

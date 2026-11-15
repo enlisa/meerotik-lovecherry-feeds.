@@ -34,6 +34,7 @@ def main():
     ap.add_argument("--apply", action="store_true")
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--publish-collections", action="store_true")
+    ap.add_argument("--no-publish", action="store_true", help="only set status (app lacks write_publications)")
     args = ap.parse_args()
     shop = s.Shopify(os.environ["SHOPIFY_STORE_DOMAIN"], None, None,
                      os.environ["SHOPIFY_CLIENT_ID"], os.environ["SHOPIFY_CLIENT_SECRET"])
@@ -92,7 +93,7 @@ def main():
                         done_status += 1
             m2 = " ".join(f'b{j}:publishablePublish(id:"{p["id"]}",input:[{{publicationId:"{pub}"}}]){{userErrors{{message}}}}'
                            for j, p in enumerate(chunk) if not p["published"])
-            if m2:
+            if m2 and not args.no_publish:
                 d = shop.gql("mutation{" + m2 + "}")
                 for k, v in d.items():
                     if v["userErrors"]:
@@ -107,6 +108,7 @@ def main():
                          {"id": cids[h], "p": pub})["publishablePublish"]
             coll_pub[h] = d["userErrors"][:1] or "published"
     out = Path("public/reports"); out.mkdir(parents=True, exist_ok=True)
+    (out / "activation_ids.txt").write_text("\n".join(p["id"].rsplit("/", 1)[-1] for p in ok) + "\n")
     report = {"generated_at_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
               "mode": "apply" if args.apply else "dry_run", "limit": args.limit,
               "candidates": len(ids), "eligible": len(ok), "skipped": dict(reasons),

@@ -1,2 +1,2 @@
-activate apply limit=3
-test3
+activate apply all
+run-all
