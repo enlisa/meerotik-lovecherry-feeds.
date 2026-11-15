@@ -1,0 +1,27 @@
+{
+  "generated_at_utc": "2026-11-15T02:08:51Z",
+  "mode": "dry_run",
+  "feed_products": 11772,
+  "shopify_products": 24095,
+  "feed_products_with_stock": 7464,
+  "feed_products_without_stock": 4308,
+  "status_counts": {
+    "assigned": 5846,
+    "excluded:unclassified": 874,
+    "excluded:no_stock": 3981,
+    "excluded:duplicate_products_not_identical": 1068,
+    "excluded:ambiguous_reference": 3
+  },
+  "per_collection_products": {
+    "Toys": 3918,
+    "Lingerie": 370,
+    "BDSM": 1116,
+    "Für Paare": 173,
+    "Wellness": 721,
+    "Neuheiten": 0,
+    "Bestseller": 0
+  },
+  "assigned_products": 5846,
+  "duplicate_extra_copies_in_assigned_groups": 4617,
+  "note": "Neuheiten/Bestseller: no date/sales data in feed, not assigned."
+}
