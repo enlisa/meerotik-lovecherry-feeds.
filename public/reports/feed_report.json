@@ -13,7 +13,7 @@
     "8": 2219
   },
   "products_with_more_than_8_valid_unique_images": 1668,
-  "raw_image_urls": 56128,
+  "raw_image_urls": 56129,
   "invalid_urls": 0,
   "invalid_url_examples": [],
   "duplicate_urls_removed_total": 325,
@@ -30,6 +30,6 @@
     },
     "problems": []
   },
-  "generated_at_utc": "2026-11-15T09:10:36Z",
+  "generated_at_utc": "2026-11-15T13:43:02Z",
   "stock_rows": 29417
 }
