@@ -26,12 +26,7 @@ def members(shop, cid):
         after = d["pageInfo"]["endCursor"]
 
 
-def online_store_publication(shop):
-    for p in shop.gql("{publications(first:20){nodes{id catalog{title}}}}")["publications"]["nodes"]:
-        t = ((p.get("catalog") or {}).get("title") or "").lower()
-        if "onlineshop" in t or "online store" in t:
-            return p["id"]
-    raise SystemExit("Online Store publication not found")
+ONLINE_STORE_PUBLICATION = os.environ.get("ONLINE_STORE_PUBLICATION_ID") or "gid://shopify/Publication/365875659092"
 
 
 def main():
@@ -42,7 +37,7 @@ def main():
     args = ap.parse_args()
     shop = s.Shopify(os.environ["SHOPIFY_STORE_DOMAIN"], None, None,
                      os.environ["SHOPIFY_CLIENT_ID"], os.environ["SHOPIFY_CLIENT_SECRET"])
-    pub = online_store_publication(shop)
+    pub = ONLINE_STORE_PUBLICATION
     cids = {}
     for h in list(COLLECTIONS) + list(SUBS):
         d = shop.gql('query($q:String!){collections(first:1,query:$q){nodes{id handle}}}', {"q": f"handle:{h}"})["collections"]["nodes"]
@@ -57,9 +52,9 @@ def main():
     print(f"candidate products (members of the 5 main collections): {len(ids)}")
     ok, skipped, reasons = [], [], Counter()
     for i in range(0, len(ids), 100):
-        nodes = shop.gql("""query($ids:[ID!]!,$p:ID!){nodes(ids:$ids){... on Product{id title status
-            mediaCount{count} variants(first:100){nodes{sku price inventoryQuantity}}
-            onPub: publishedOnPublication(publicationId:$p)}}}""", {"ids": ids[i:i + 100], "p": pub})["nodes"]
+        nodes = shop.gql("""query($ids:[ID!]!){nodes(ids:$ids){... on Product{id title status
+            mediaCount{count} variants(first:100){nodes{sku price inventoryQuantity}}}}}""",
+                         {"ids": ids[i:i + 100]})["nodes"]
         for n in nodes:
             if not n:
                 continue
@@ -77,7 +72,7 @@ def main():
                 reasons[why] += 1
                 skipped.append({"id": n["id"], "title": n["title"][:100], "reason": why, "status": n["status"]})
             else:
-                ok.append({"id": n["id"], "status": n["status"], "published": n["onPub"]})
+                ok.append({"id": n["id"], "status": n["status"], "published": n["status"] == "ACTIVE"})
     todo = [p for p in ok if p["status"] != "ACTIVE" or not p["published"]]
     if args.limit:
         todo = todo[:args.limit]
