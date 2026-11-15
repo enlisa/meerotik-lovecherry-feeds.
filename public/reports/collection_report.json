@@ -1,6 +1,6 @@
 {
-  "generated_at_utc": "2026-11-15T02:08:51Z",
-  "mode": "dry_run",
+  "generated_at_utc": "2026-11-15T02:11:02Z",
+  "mode": "apply",
   "feed_products": 11772,
   "shopify_products": 24095,
   "feed_products_with_stock": 7464,
@@ -23,5 +23,12 @@
   },
   "assigned_products": 5846,
   "duplicate_extra_copies_in_assigned_groups": 4617,
-  "note": "Neuheiten/Bestseller: no date/sales data in feed, not assigned."
+  "note": "Neuheiten/Bestseller: no date/sales data in feed, not assigned.",
+  "added_to_collections": {
+    "toys": 3918,
+    "fuer-paare": 173,
+    "bdsm": 1116,
+    "wellness": 721,
+    "lingerie": 370
+  }
 }
