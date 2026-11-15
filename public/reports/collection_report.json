@@ -1,20 +1,20 @@
 {
-  "generated_at_utc": "2026-11-15T08:14:07Z",
-  "mode": "dry_run",
+  "generated_at_utc": "2026-11-15T08:19:48Z",
+  "mode": "apply",
   "feed_products": 11772,
   "shopify_products": 24095,
-  "feed_products_with_stock": 7464,
-  "feed_products_without_stock": 4308,
+  "feed_products_with_stock": 7460,
+  "feed_products_without_stock": 4312,
   "status_counts": {
-    "assigned": 5791,
+    "assigned": 5789,
     "excluded:unclassified": 913,
-    "excluded:no_stock": 3981,
+    "excluded:no_stock": 3983,
     "excluded:duplicate_products_not_identical": 1068,
     "excluded:needs_review": 16,
     "excluded:ambiguous_reference": 3
   },
   "per_collection_products": {
-    "Toys": 3888,
+    "Toys": 3886,
     "Lingerie": 282,
     "BDSM": 1116,
     "Für Paare": 167,
@@ -22,12 +22,12 @@
     "Neuheiten": 0,
     "Bestseller": 0
   },
-  "assigned_products": 5791,
+  "assigned_products": 5789,
   "per_subcollection_products": {
     "toys-vibratoren": 1089,
     "toys-dildos": 836,
-    "toys-masturbatoren": 604,
-    "toys-anal-spielzeug": 523,
+    "toys-masturbatoren": 603,
+    "toys-anal-spielzeug": 522,
     "toys-penisringe": 268,
     "toys-kegel-liebeskugeln": 59,
     "toys-klitoris-stimulatoren": 141,
@@ -66,9 +66,234 @@
     "wellness-bad-koerperpflege": 50,
     "wellness-beckenboden-kegelkugeln": 65
   },
-  "duplicate_extra_copies_in_assigned_groups": 4575,
+  "duplicate_extra_copies_in_assigned_groups": 4574,
   "note": "Neuheiten/Bestseller: no date/sales data in feed, not assigned.",
-  "review_rows_in_stock": 1673,
+  "subcollections": {
+    "toys-vibratoren": {
+      "id": "gid://shopify/Collection/737013137748",
+      "add": 1089,
+      "remove": 0
+    },
+    "toys-dildos": {
+      "id": "gid://shopify/Collection/737013236052",
+      "add": 836,
+      "remove": 0
+    },
+    "toys-masturbatoren": {
+      "id": "gid://shopify/Collection/737013268820",
+      "add": 603,
+      "remove": 0
+    },
+    "toys-anal-spielzeug": {
+      "id": "gid://shopify/Collection/737013334356",
+      "add": 522,
+      "remove": 0
+    },
+    "toys-penisringe": {
+      "id": "gid://shopify/Collection/737013367124",
+      "add": 268,
+      "remove": 0
+    },
+    "toys-kegel-liebeskugeln": {
+      "id": "gid://shopify/Collection/737013432660",
+      "add": 59,
+      "remove": 0
+    },
+    "toys-klitoris-stimulatoren": {
+      "id": "gid://shopify/Collection/737013465428",
+      "add": 141,
+      "remove": 0
+    },
+    "toys-eier-bullets": {
+      "id": "gid://shopify/Collection/737013498196",
+      "add": 266,
+      "remove": 0
+    },
+    "toys-massagegeraete-wands": {
+      "id": "gid://shopify/Collection/737013530964",
+      "add": 117,
+      "remove": 0
+    },
+    "toys-pumpen": {
+      "id": "gid://shopify/Collection/737013563732",
+      "add": 45,
+      "remove": 0
+    },
+    "toys-strap-ons-harnesse": {
+      "id": "gid://shopify/Collection/737013596500",
+      "add": 126,
+      "remove": 0
+    },
+    "toys-stimulatoren": {
+      "id": "gid://shopify/Collection/737013629268",
+      "add": 352,
+      "remove": 0
+    },
+    "toys-penis-huellen-verlaengerer": {
+      "id": "gid://shopify/Collection/737013694804",
+      "add": 72,
+      "remove": 0
+    },
+    "lingerie-slips-strings": {
+      "id": "gid://shopify/Collection/737013727572",
+      "add": 118,
+      "remove": 0
+    },
+    "lingerie-struempfe-strapse": {
+      "id": "gid://shopify/Collection/737013760340",
+      "add": 53,
+      "remove": 0
+    },
+    "lingerie-bhs-oberteile": {
+      "id": "gid://shopify/Collection/737013793108",
+      "add": 41,
+      "remove": 0
+    },
+    "lingerie-sets-bodys": {
+      "id": "gid://shopify/Collection/737013825876",
+      "add": 42,
+      "remove": 0
+    },
+    "lingerie-kostueme-kleider": {
+      "id": "gid://shopify/Collection/737013858644",
+      "add": 16,
+      "remove": 0
+    },
+    "lingerie-herren-unterwaesche": {
+      "id": "gid://shopify/Collection/737013891412",
+      "add": 13,
+      "remove": 0
+    },
+    "lingerie-harnesse-accessoires": {
+      "id": "gid://shopify/Collection/737013924180",
+      "add": 39,
+      "remove": 0
+    },
+    "bdsm-handschellen-fesseln": {
+      "id": "gid://shopify/Collection/737013956948",
+      "add": 289,
+      "remove": 0
+    },
+    "bdsm-peitschen-paddles": {
+      "id": "gid://shopify/Collection/737014022484",
+      "add": 185,
+      "remove": 0
+    },
+    "bdsm-halsbaender-leinen": {
+      "id": "gid://shopify/Collection/737014088020",
+      "add": 84,
+      "remove": 0
+    },
+    "bdsm-knebel-masken": {
+      "id": "gid://shopify/Collection/737014120788",
+      "add": 133,
+      "remove": 0
+    },
+    "bdsm-nippelklemmen": {
+      "id": "gid://shopify/Collection/737014153556",
+      "add": 103,
+      "remove": 0
+    },
+    "bdsm-keuschheit": {
+      "id": "gid://shopify/Collection/737014219092",
+      "add": 29,
+      "remove": 0
+    },
+    "bdsm-elektrostimulation": {
+      "id": "gid://shopify/Collection/737014251860",
+      "add": 36,
+      "remove": 0
+    },
+    "bdsm-geschirre-outfits": {
+      "id": "gid://shopify/Collection/737014284628",
+      "add": 64,
+      "remove": 0
+    },
+    "bdsm-zubehoer-spezial": {
+      "id": "gid://shopify/Collection/737014317396",
+      "add": 71,
+      "remove": 0
+    },
+    "paare-spiele-wuerfel": {
+      "id": "gid://shopify/Collection/737014350164",
+      "add": 125,
+      "remove": 0
+    },
+    "paare-paar-vibratoren": {
+      "id": "gid://shopify/Collection/737014382932",
+      "add": 39,
+      "remove": 0
+    },
+    "paare-gutscheine": {
+      "id": "gid://shopify/Collection/737014415700",
+      "add": 10,
+      "remove": 0
+    },
+    "paare-buecher": {
+      "id": "gid://shopify/Collection/737014448468",
+      "add": 8,
+      "remove": 0
+    },
+    "wellness-gleitmittel": {
+      "id": "gid://shopify/Collection/737014481236",
+      "add": 219,
+      "remove": 0
+    },
+    "wellness-massageoele-gele": {
+      "id": "gid://shopify/Collection/737014514004",
+      "add": 125,
+      "remove": 0
+    },
+    "wellness-massagekerzen": {
+      "id": "gid://shopify/Collection/737014546772",
+      "add": 42,
+      "remove": 0
+    },
+    "wellness-pheromone-parfuem": {
+      "id": "gid://shopify/Collection/737014579540",
+      "add": 54,
+      "remove": 0
+    },
+    "wellness-stimulation-verzoegerung": {
+      "id": "gid://shopify/Collection/737014612308",
+      "add": 74,
+      "remove": 0
+    },
+    "wellness-reinigung-intimpflege": {
+      "id": "gid://shopify/Collection/737014645076",
+      "add": 37,
+      "remove": 0
+    },
+    "wellness-bad-koerperpflege": {
+      "id": "gid://shopify/Collection/737014677844",
+      "add": 50,
+      "remove": 0
+    },
+    "wellness-beckenboden-kegelkugeln": {
+      "id": "gid://shopify/Collection/737014710612",
+      "add": 65,
+      "remove": 0
+    }
+  },
+  "added_to_collections": {
+    "toys": 0,
+    "lingerie": 0,
+    "bdsm": 0,
+    "fuer-paare": 0,
+    "wellness": 0,
+    "neuheiten": 0,
+    "bestseller": 0
+  },
+  "removed_from_collections": {
+    "toys": 2,
+    "lingerie": 0,
+    "bdsm": 0,
+    "fuer-paare": 0,
+    "wellness": 0,
+    "neuheiten": 0,
+    "bestseller": 0
+  },
+  "review_rows_in_stock": 1671,
   "neuheiten": "not assigned: feed has no supplier intake date (only idProducto, no date column); Shopify createdAt is the import date, not usable",
   "bestseller": "not assigned: no real Shopify sales data"
 }
