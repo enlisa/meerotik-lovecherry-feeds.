@@ -87,7 +87,7 @@ def classify(name, brand):
         if LINGERIE.search(n) or (b in LINGERIE_BRANDS and not BDSM.search(n)):
             cols.add("lingerie")
     lube = (bool(LUBE_LIKE.search(n)) and not TOY_EXPLICIT.search(n)) or "liquid vibrator" in n.lower()
-    if (TOYS.search(n) or b in TOY_BRANDS) and not lube:
+    if (TOYS.search(n) or b in TOY_BRANDS) and not lube and not re.search(r"clean", n, re.I):
         cols.add("toys")
     if COUPLES.search(n) and not COUPLES_NOT.search(n):
         cols.add("fuer-paare")
