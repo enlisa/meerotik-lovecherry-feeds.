@@ -1,2 +1,2 @@
-categorize
-subs-dry
+categorize apply
+subs
