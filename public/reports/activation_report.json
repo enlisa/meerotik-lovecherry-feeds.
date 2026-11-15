@@ -1,0 +1,15 @@
+{
+  "generated_at_utc": "2026-11-15T09:09:48Z",
+  "mode": "dry_run",
+  "limit": 0,
+  "candidates": 5789,
+  "eligible": 5789,
+  "skipped": {},
+  "still_to_activate_or_publish": 5789,
+  "processed_now": 5789,
+  "status_set_active": 0,
+  "published_online_store": 0,
+  "errors": [],
+  "collections_published": 0,
+  "collection_publish_errors": {}
+}
