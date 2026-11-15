@@ -16,6 +16,7 @@ from collections import Counter, defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
 import sync_shopify_images as s
+from subcollections import SUBS
 from analyze_catalog import stock_by_ref
 
 COLLECTIONS = {"toys": "Toys", "lingerie": "Lingerie", "bdsm": "BDSM",
@@ -115,6 +116,16 @@ def collection_ids(shop):
     return out
 
 
+def collection_ids_for(shop, handles):
+    out = {}
+    for handle in handles:
+        d = shop.gql('query($q:String!){collections(first:1,query:$q){nodes{id handle}}}',
+                     {"q": f"handle:{handle}"})["collections"]["nodes"]
+        if d and d[0]["handle"] == handle:
+            out[handle] = d[0]["id"]
+    return out
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--apply", action="store_true")
@@ -127,6 +138,7 @@ def main():
     stock = stock_by_ref("public/feeds/stock.csv")
     products, sku_index = s.export_products(shop)
     rows, members = [], defaultdict(list)
+    assigned_rows = []
     excl, per_col = Counter(), Counter()
     in_stock_products = 0
     in_stock_dup_extras = 0
@@ -153,6 +165,7 @@ def main():
             in_stock_products += 1
         excl[status] += 1
         if status == "assigned":
+            assigned_rows.append((use[0]["id"], name, cols))
             for c in cols:
                 per_col[c] += 1
                 members[c].append(use[0]["id"])
@@ -160,6 +173,11 @@ def main():
         rows.append({"idProducto": g["id"], "name": name[:120], "brand": brand, "stock": total,
                      "collections": ",".join(sorted(cols)), "status": status,
                      "shopify_ids": shopify_ids, "copies": len(prods or [])})
+    sub_members = defaultdict(set)
+    for gid, name, cols in assigned_rows:
+        for handle, (parent, _titles, rule) in SUBS.items():
+            if parent in cols and rule.search(name):
+                sub_members[handle].add(gid)
     out = Path("public/reports"); out.mkdir(parents=True, exist_ok=True)
     with open(out / "collection_plan.csv", "w", newline="", encoding="utf-8-sig") as f:
         w = csv.DictWriter(f, fieldnames=list(rows[0])); w.writeheader(); w.writerows(rows)
@@ -171,6 +189,7 @@ def main():
               "status_counts": dict(excl),
               "per_collection_products": {COLLECTIONS[h]: per_col.get(h, 0) for h in COLLECTIONS},
               "assigned_products": excl["assigned"],
+              "per_subcollection_products": {h: len(sub_members.get(h, ())) for h in SUBS},
               "duplicate_extra_copies_in_assigned_groups": in_stock_dup_extras,
               "note": "Neuheiten/Bestseller: no date/sales data in feed, not assigned."}
     added, removed = {}, {}
@@ -201,6 +220,38 @@ def main():
                     time.sleep(1)
                 else:
                     (added if key == "add" else removed)[h] = done
+        sub_report = {}
+        for h, (parent, titles, _r) in SUBS.items():
+            cid = ids.get(h) or collection_ids_for(shop, [h]).get(h)
+            if not cid:
+                d = shop.gql("mutation($c:CollectionCreateInput!){collectionCreate(collection:$c){collection{id} userErrors{message}}}",
+                             {"c": {"title": titles["de"], "handle": h}})["collectionCreate"]
+                if d.get("userErrors"):
+                    sub_report[h] = f"create errors: {d['userErrors'][:2]}"; continue
+                cid = d["collection"]["id"]
+            ids[h] = cid
+            want = sub_members.get(h, set()); have, after = set(), None
+            while True:
+                d = shop.gql("query($id:ID!,$a:String){collection(id:$id){products(first:250,after:$a){nodes{id} pageInfo{hasNextPage endCursor}}}}",
+                             {"id": cid, "a": after})["collection"]["products"]
+                have |= {n["id"] for n in d["nodes"]}
+                if not d["pageInfo"]["hasNextPage"]:
+                    break
+                after = d["pageInfo"]["endCursor"]
+            res = {}
+            for key, mut, ids_ in (("add", "collectionAddProductsV2", sorted(want - have)),
+                                   ("remove", "collectionRemoveProducts", sorted(have - want))):
+                done = 0
+                for i in range(0, len(ids_), 250):
+                    d = shop.gql("mutation($id:ID!,$p:[ID!]!){%s(id:$id,productIds:$p){userErrors{message}}}" % mut,
+                                 {"id": cid, "p": ids_[i:i + 250]})[mut]
+                    if d.get("userErrors"):
+                        res[key] = f"errors: {d['userErrors'][:2]}"; break
+                    done += len(ids_[i:i + 250]); time.sleep(1)
+                else:
+                    res[key] = done
+            sub_report[h] = {"id": cid, **res}
+        report["subcollections"] = sub_report
         report["added_to_collections"] = added
         report["removed_from_collections"] = removed
     review = [r for r in rows if r["status"].startswith("excluded:") and int(r["stock"] or 0) > 0

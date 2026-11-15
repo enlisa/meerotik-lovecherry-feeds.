@@ -1,2 +1,2 @@
-categorize apply
-run2
+categorize
+subs-dry
